@@ -10,6 +10,31 @@ struct Tcod {
     root: Root,
 }
 
+fn handle_keys(tcod: &mut Tcod, player_x: &mut i32, player_y: &mut i32) -> bool {
+    use tcod::input::Key;
+    use tcod::input::KeyCode::*;
+
+    let key = tcod.root.wait_for_keypress(true);
+    match key {
+        Key {
+            code: Enter,
+            alt: true,
+            ..
+        } => {
+            // alt + enter toggles full screen
+            let fullscreen = tcod.root.is_fullscreen();
+            tcod.root.set_fullscreen(!fullscreen);
+        }
+        Key { code: Escape, .. } => return true,
+        Key { code: Up, .. } => *player_y -= 1,
+        Key { code: Down, .. } => *player_y += 1,
+        Key { code: Left, .. } => *player_x -= 1,
+        Key { code: Right, .. } => *player_x += 1,
+        _ => {}
+    }
+    false // false means 'keep going', true means 'exit the game'
+}
+
 fn main() {
     tcod::system::set_fps(LIMIT_FPS);
 
@@ -29,8 +54,13 @@ fn main() {
     while !tcod.root.window_closed() {
         tcod.root.set_default_foreground(WHITE);
         tcod.root.clear();
-        tcod.root.put_char(1, 1, '@', BackgroundFlag::None);
+        tcod.root
+            .put_char(player_x, player_y, '@', BackgroundFlag::None);
         tcod.root.flush();
-        tcod.root.wait_for_keypress(true);
+
+        let exit = handle_keys(&mut tcod, &mut player_x, &mut player_y);
+        if exit {
+            break;
+        }
     }
 }
